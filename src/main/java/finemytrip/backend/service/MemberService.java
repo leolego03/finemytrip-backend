@@ -8,10 +8,7 @@ import finemytrip.backend.entity.Member;
 import finemytrip.backend.repository.MemberRepository;
 import finemytrip.backend.util.JwtUtil;
 import finemytrip.backend.util.TokenBlacklist;
-import lombok.RequiredArgsConstructor;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,14 +17,20 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
-@RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class MemberService {
     private final MemberRepository memberRepository;
-    private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
     private final TokenBlacklist tokenBlacklist;
-    private final AuthenticationManager authenticationManager;
+    
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+    
+    public MemberService(MemberRepository memberRepository, JwtUtil jwtUtil, TokenBlacklist tokenBlacklist) {
+        this.memberRepository = memberRepository;
+        this.jwtUtil = jwtUtil;
+        this.tokenBlacklist = tokenBlacklist;
+    }
 
     @Transactional
     public MemberResponseDto register(MemberRegisterRequestDto requestDto) {
@@ -46,15 +49,14 @@ public class MemberService {
     }
 
     public LoginResponseDto login(MemberLoginRequestDto requestDto) {
-        Authentication authentication = authenticationManager.authenticate(
-            new UsernamePasswordAuthenticationToken(requestDto.getEmail(), requestDto.getPassword())
-        );
-
-        String token = jwtUtil.generateToken(requestDto.getEmail(), 
-            memberRepository.findByEmail(requestDto.getEmail()).get().getId());
-
         Member member = memberRepository.findByEmail(requestDto.getEmail())
                 .orElseThrow(() -> new RuntimeException("User not found."));
+        
+        if (!passwordEncoder.matches(requestDto.getPassword(), member.getPassword())) {
+            throw new RuntimeException("Bad credentials");
+        }
+
+        String token = jwtUtil.generateToken(member.getEmail(), member.getId());
 
         return LoginResponseDto.builder()
                 .token(token)
@@ -96,10 +98,6 @@ public class MemberService {
         return passwordEncoder.encode(password);
     }
 
-    private String decodePassword(String encodedPassword) {
-        return passwordEncoder.encode(encodedPassword);
-    }
-
     private MemberResponseDto convertToResponseDto(Member member) {
         return MemberResponseDto.builder()
                 .id(member.getId())
@@ -115,4 +113,4 @@ public class MemberService {
                 .map(this::convertToResponseDto)
                 .collect(Collectors.toList());
     }
-} 
+}

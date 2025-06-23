@@ -8,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -17,6 +18,7 @@ import java.util.stream.Collectors;
 public class MainSlideService {
     
     private final MainSlideRepository mainSlideRepository;
+    private final FileUploadService fileUploadService;
     
     public List<MainSlideResponseDto> getAllSlides() {
         return mainSlideRepository.findAllByOrderBySortOrderAscCreatedAtAsc()
@@ -39,15 +41,26 @@ public class MainSlideService {
     }
     
     @Transactional
-    public MainSlideResponseDto createSlide(MainSlideRequestDto requestDto) {
+    public MainSlideResponseDto createSlide(MainSlideRequestDto requestDto) throws IOException {
+        String imageUrl = requestDto.getImage();
+        String bgImageUrl = requestDto.getBgImage();
+
+        // Handle file uploads
+        if (requestDto.getImageFile() != null && !requestDto.getImageFile().isEmpty()) {
+            imageUrl = fileUploadService.uploadFile(requestDto.getImageFile());
+        }
+        if (requestDto.getBgImageFile() != null && !requestDto.getBgImageFile().isEmpty()) {
+            bgImageUrl = fileUploadService.uploadFile(requestDto.getBgImageFile());
+        }
+
         MainSlide slide = MainSlide.builder()
                 .title(requestDto.getTitle())
                 .headline(requestDto.getHeadline())
-                .image(requestDto.getImage())
-                .bgImage(requestDto.getBgImage())
-                .url(requestDto.getUrl())
+                .image(imageUrl)
+                .bgImage(bgImageUrl)
+                .url(requestDto.getUrl() != null ? requestDto.getUrl() : "#")
                 .date(requestDto.getDate())
-                .isActive(requestDto.getIsActive())
+                .isActive(requestDto.getIsActive() != null ? requestDto.getIsActive() : true)
                 .sortOrder(requestDto.getSortOrder())
                 .build();
         
@@ -56,14 +69,35 @@ public class MainSlideService {
     }
     
     @Transactional
-    public MainSlideResponseDto updateSlide(Long id, MainSlideRequestDto requestDto) {
+    public MainSlideResponseDto updateSlide(Long id, MainSlideRequestDto requestDto) throws IOException {
         MainSlide slide = mainSlideRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Slide not found. ID: " + id));
         
+        // Handle file uploads
+        if (requestDto.getImageFile() != null && !requestDto.getImageFile().isEmpty()) {
+            // Delete old image file if exists
+            if (slide.getImage() != null) {
+                fileUploadService.deleteFile(slide.getImage());
+            }
+            String imageUrl = fileUploadService.uploadFile(requestDto.getImageFile());
+            slide.setImage(imageUrl);
+        } else if (requestDto.getImage() != null) {
+            slide.setImage(requestDto.getImage());
+        }
+
+        if (requestDto.getBgImageFile() != null && !requestDto.getBgImageFile().isEmpty()) {
+            // Delete old background image file if exists
+            if (slide.getBgImage() != null) {
+                fileUploadService.deleteFile(slide.getBgImage());
+            }
+            String bgImageUrl = fileUploadService.uploadFile(requestDto.getBgImageFile());
+            slide.setBgImage(bgImageUrl);
+        } else if (requestDto.getBgImage() != null) {
+            slide.setBgImage(requestDto.getBgImage());
+        }
+
         slide.setTitle(requestDto.getTitle());
         slide.setHeadline(requestDto.getHeadline());
-        slide.setImage(requestDto.getImage());
-        slide.setBgImage(requestDto.getBgImage());
         slide.setUrl(requestDto.getUrl());
         slide.setDate(requestDto.getDate());
         slide.setIsActive(requestDto.getIsActive());
@@ -74,10 +108,18 @@ public class MainSlideService {
     }
     
     @Transactional
-    public void deleteSlide(Long id) {
-        if (!mainSlideRepository.existsById(id)) {
-            throw new RuntimeException("Slide not found. ID: " + id);
+    public void deleteSlide(Long id) throws IOException {
+        MainSlide slide = mainSlideRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Slide not found. ID: " + id));
+
+        // Delete associated files
+        if (slide.getImage() != null) {
+            fileUploadService.deleteFile(slide.getImage());
         }
+        if (slide.getBgImage() != null) {
+            fileUploadService.deleteFile(slide.getBgImage());
+        }
+
         mainSlideRepository.deleteById(id);
     }
     

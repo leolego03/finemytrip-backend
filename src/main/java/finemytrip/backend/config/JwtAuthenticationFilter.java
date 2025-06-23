@@ -97,6 +97,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private boolean isPublicPath(String requestURI, String method) {
         log.info("Checking if path is public: {} {}", method, requestURI);
         
+        // Perform the upload path check first
+        if (requestURI.startsWith("/uploads/") || requestURI.equals("/uploads")) {
+            log.info("Matched uploads path: {}", requestURI);
+            return true;
+        }
+        
         if (requestURI.equals("/") && "GET".equals(method)) {
             log.info("Matched root path");
             return true;

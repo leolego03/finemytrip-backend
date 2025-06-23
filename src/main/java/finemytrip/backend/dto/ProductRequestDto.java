@@ -4,20 +4,22 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.springframework.web.multipart.MultipartFile;
 
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class ProductRequestDto {
-    private String image;
-    private String discountBadge;
     private String title;
-    private String info;
-    private String discountRate;
     private String originalPrice;
     private String discountedPrice;
-    private String starsHtml;
-    private String reviewRate;
+    private String discountRate;
+    private String discountBadge;
+    private String info;
     private String purchaseCount;
+    private String reviewRate;
+    private String starsHtml;
+    
+    private MultipartFile image;
 } 

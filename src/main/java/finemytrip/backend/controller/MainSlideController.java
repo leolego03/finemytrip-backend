@@ -3,12 +3,13 @@ package finemytrip.backend.controller;
 import finemytrip.backend.dto.MainSlideRequestDto;
 import finemytrip.backend.dto.MainSlideResponseDto;
 import finemytrip.backend.service.MainSlideService;
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.IOException;
 import java.util.List;
 
 @RestController
@@ -19,13 +20,19 @@ public class MainSlideController {
     
     private final MainSlideService mainSlideService;
     
-    @GetMapping("/admin")
+    @GetMapping
     public ResponseEntity<List<MainSlideResponseDto>> getAllSlides() {
         List<MainSlideResponseDto> slides = mainSlideService.getAllSlides();
         return ResponseEntity.ok(slides);
     }
     
-    @GetMapping
+    @GetMapping("/admin")
+    public ResponseEntity<List<MainSlideResponseDto>> getAdminSlides() {
+        List<MainSlideResponseDto> slides = mainSlideService.getAllSlides();
+        return ResponseEntity.ok(slides);
+    }
+    
+    @GetMapping("/active")
     public ResponseEntity<List<MainSlideResponseDto>> getActiveSlides() {
         List<MainSlideResponseDto> slides = mainSlideService.getActiveSlides();
         return ResponseEntity.ok(slides);
@@ -41,38 +48,40 @@ public class MainSlideController {
         }
     }
     
-    @PostMapping
-    public ResponseEntity<?> createSlide(@Valid @RequestBody MainSlideRequestDto requestDto) {
+    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<MainSlideResponseDto> createSlide(@ModelAttribute MainSlideRequestDto requestDto) {
         try {
             MainSlideResponseDto createdSlide = mainSlideService.createSlide(requestDto);
             return ResponseEntity.status(HttpStatus.CREATED).body(createdSlide);
-        } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
+        } catch (IOException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(null);
         }
     }
     
-    @PutMapping("/{id}")
-    public ResponseEntity<?> updateSlide(@PathVariable Long id, @Valid @RequestBody MainSlideRequestDto requestDto) {
+    @PutMapping(value = "/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<MainSlideResponseDto> updateSlide(@PathVariable Long id, @ModelAttribute MainSlideRequestDto requestDto) {
         try {
             MainSlideResponseDto updatedSlide = mainSlideService.updateSlide(id, requestDto);
             return ResponseEntity.ok(updatedSlide);
-        } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
+        } catch (IOException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(null);
         }
     }
     
     @DeleteMapping("/{id}")
-    public ResponseEntity<?> deleteSlide(@PathVariable Long id) {
+    public ResponseEntity<Void> deleteSlide(@PathVariable Long id) {
         try {
             mainSlideService.deleteSlide(id);
             return ResponseEntity.noContent().build();
-        } catch (RuntimeException e) {
-            return ResponseEntity.notFound().build();
+        } catch (IOException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
     
     @PatchMapping("/{id}/toggle")
-    public ResponseEntity<?> toggleSlideStatus(@PathVariable Long id) {
+    public ResponseEntity<MainSlideResponseDto> toggleSlideStatus(@PathVariable Long id) {
         try {
             MainSlideResponseDto updatedSlide = mainSlideService.toggleSlideStatus(id);
             return ResponseEntity.ok(updatedSlide);
