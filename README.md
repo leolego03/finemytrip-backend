@@ -10,13 +10,15 @@ FineMyTrip Backend is a RESTful API service that provides comprehensive travel p
 
 ### 1. Main Slide Management
 - Data processing for main slides
-- Image URL, title, and description management
+- Slide image file upload support
+- Slide URL, title, headline, and description management
 - Active/inactive status toggle
 - Sort order management
 
 ### 2. Travel Product Management
 - Data processing for travel products
-- Product name, price, description, and image URL management
+- Product image file upload support
+- Product URL, name, price, and description management
 - Discount rate and badge support
 - Purchase count and review rate tracking
 
@@ -40,6 +42,7 @@ finemytrip-backend/
 │   ├── config/                 # Configuration classes
 │   │   ├── SecurityConfig.java
 │   │   ├── JwtAuthenticationFilter.java
+│   │   ├── WebConfig.java
 │   │   └── DataLoader.java
 │   ├── controller/             # REST API controllers
 │   │   ├── MemberController.java
@@ -49,6 +52,7 @@ finemytrip-backend/
 │   │   ├── MemberService.java
 │   │   ├── ProductService.java
 │   │   ├── MainSlideService.java
+│   │   ├── FileUploadService.java
 │   │   └── CustomUserDetailsService.java
 │   ├── repository/             # Data access layer
 │   │   ├── MemberRepository.java
@@ -59,16 +63,25 @@ finemytrip-backend/
 │   │   ├── Product.java
 │   │   └── MainSlide.java
 │   ├── dto/                    # Data Transfer Objects
-│   │   ├── MemberRequestDto.java
+│   │   ├── MemberRegisterRequestDto.java
+│   │   ├── MemberLoginRequestDto.java
+│   │   ├── LoginResponseDto.java
+│   │   ├── MemberResponseDto.java
 │   │   ├── ProductRequestDto.java
-│   │   └── MainSlideRequestDto.java
+│   │   ├── ProductResponseDto.java
+│   │   ├── MainSlideRequestDto.java
+│   │   └── MainSlideResponseDto.java
 │   ├── util/                   # Utility classes
 │   │   ├── JwtUtil.java
 │   │   └── TokenBlacklist.java
 │   └── exception/              # Exception handling
 │       └── GlobalExceptionHandler.java
 └── src/main/resources/
-    └── application.properties  # Application configuration
+│   ├── application.properties  # Application configuration
+│   ├── application-dev.properties
+│   └── application-prod.properties
+├── uploads/                    # File upload directory (auto-created)
+├── build.gradle                # Gradle build configuration
 ```
 
 ## Technology Stack
@@ -93,25 +106,28 @@ finemytrip-backend/
 - `POST /api/members/register` - User registration
 - `POST /api/members/login` - User login (returns JWT token)
 
-### User Management (Authenticated)
+### User Management (Public Read, Authenticated Write)
+- `GET /api/members` - Get all users (public)
+- `GET /api/members/{id}` - Get user by ID (public)
+- `GET /api/members/email/{email}` - Get user by email (public)
 - `POST /api/members/logout` - User logout (requires JWT token)
-- `GET /api/members/{id}` - Get user by ID
-- `GET /api/members` - Get all users
 
 ### Main Slides (Public Read, Authenticated Write)
-- `GET /api/main-slides` - Get active slides
-- `GET /api/main-slides/{id}` - Get slide by ID
-- `POST /api/main-slides` - Create slide (requires JWT token)
-- `PUT /api/main-slides/{id}` - Update slide (requires JWT token)
+- `GET /api/main-slides` - Get all slides (public)
+- `GET /api/main-slides/{id}` - Get slide by ID (public)
+- `POST /api/main-slides` - Create slide (multipart/form-data, requires JWT token)
+- `PUT /api/main-slides/{id}` - Update slide (multipart/form-data, requires JWT token)
 - `DELETE /api/main-slides/{id}` - Delete slide (requires JWT token)
-- `PATCH /api/main-slides/{id}/toggle` - Toggle slide status (requires JWT token)
 
 ### Products (Public Read, Authenticated Write)
-- `GET /api/products` - Get all products
-- `GET /api/products/{id}` - Get product by ID
-- `POST /api/products` - Create product (requires JWT token)
-- `PUT /api/products/{id}` - Update product (requires JWT token)
+- `GET /api/products` - Get all products (public)
+- `GET /api/products/{id}` - Get product by ID (public)
+- `POST /api/products` - Create product (multipart/form-data, requires JWT token)
+- `PUT /api/products/{id}` - Update product (multipart/form-data, requires JWT token)
 - `DELETE /api/products/{id}` - Delete product (requires JWT token)
+
+### File Access (Public)
+- `GET /uploads/{filename}` - Access uploaded files (public)
 
 ## JWT Authentication
 
@@ -128,6 +144,18 @@ finemytrip-backend/
 - **Algorithm**: HMAC-SHA256
 - **Claims**: email, memberId
 
+## File Upload System
+
+### Supported Features
+- **File Types**: All common image formats (JPG, PNG, GIF, etc.)
+- **File Size**: Maximum 10MB per file
+- **Storage**: Local file system
+- **Access**: Static resource serving via `/uploads/{filename}`
+
+### Environment-specific Behavior
+- **Development**: Files stored in `./uploads/` (project root), auto-cleanup on startup
+- **Production**: Files stored in configured external directory, no auto-cleanup
+
 ## Configuration Files
 
 Since all `application*.properties` files are excluded from Git for security reasons, you need to create your own configuration files locally.
@@ -142,8 +170,14 @@ spring.application.name=backend
 spring.profiles.active=dev
 
 # Basic JWT Configuration
-jwt.secret.key=${JWT_SECRET_KEY:defaultSecretKey1234567890123456789012345678901234567890}
+jwt.secret.key=${JWT_SECRET_KEY:<YOUR_SECRET>}
 jwt.expiration.time=86400000
+
+# File Upload Configuration
+spring.servlet.multipart.max-file-size=10MB
+spring.servlet.multipart.max-request-size=10MB
+file.upload.path=${user.dir}/uploads
+file.upload.url-prefix=/uploads
 ```
 
 #### 2. `src/main/resources/application-dev.properties`
@@ -171,38 +205,63 @@ logging.level.org.hibernate.SQL=DEBUG
 logging.level.org.hibernate.type.descriptor.sql.BasicBinder=TRACE
 
 # JWT Configuration
-jwt.secret.key=${JWT_SECRET_KEY:devSecretKey1234567890123456789012345678901234567890}
+jwt.secret.key=${JWT_SECRET_KEY:<YOUR_SECRET>}
 jwt.expiration.time=86400000
+
+# File Upload Configuration
+spring.servlet.multipart.max-file-size=10MB
+spring.servlet.multipart.max-request-size=10MB
+file.upload.path=${user.dir}/uploads
+file.upload.url-prefix=/uploads
+
+# Development Environment Settings
+# Enable File Organization (Development Environment Only)
+app.file.cleanup.enabled=true
 ```
 
 #### 3. `src/main/resources/application-prod.properties`
 ```properties
 # Production Environment Configuration
 
-# Database Configuration (Use external database in production)
-spring.datasource.url=${DATABASE_URL}
-spring.datasource.username=${DATABASE_USERNAME}
-spring.datasource.password=${DATABASE_PASSWORD}
+# JWT Configuration
+jwt.secret.key=${JWT_SECRET_KEY:<YOUR_SECRET>}
+jwt.expiration.time=86400000
 
-# H2 Console (Disabled in production)
-spring.h2.console.enabled=false
+# Database Configuration
+spring.datasource.url=jdbc:h2:mem:testdb
+spring.datasource.driverClassName=org.h2.Driver
+spring.datasource.username=sa
+spring.datasource.password=
 
 # JPA Configuration
-spring.jpa.hibernate.ddl-auto=validate
+spring.jpa.database-platform=org.hibernate.dialect.H2Dialect
+spring.jpa.hibernate.ddl-auto=create-drop
 spring.jpa.show-sql=false
-spring.jpa.properties.hibernate.format_sql=false
 
-# Logging Configuration (Minimal logging in production)
-logging.level.org.hibernate.SQL=WARN
-logging.level.org.hibernate.type.descriptor.sql.BasicBinder=WARN
+# H2 Console Disabled
+spring.h2.console.enabled=false
+
+# File Upload Configuration
+spring.servlet.multipart.max-file-size=10MB
+spring.servlet.multipart.max-request-size=10MB
+file.upload.path=/var/finemytrip/uploads
+file.upload.url-prefix=/uploads
+
+# Production Environment Settings
+# Disable file organization (file retention in production)
+app.file.cleanup.enabled=false
+
+# Logging Configuration
+logging.level.root=WARN
 logging.level.finemytrip.backend=INFO
-
-# JWT Configuration
-jwt.secret.key=${JWT_SECRET_KEY}
-jwt.expiration.time=86400000
+logging.level.org.springframework.security=WARN
 
 # Security Configuration
 spring.security.require-ssl=true
+
+# Logging Configuration (Minimal logging in production)
+logging.level.org.hibernate.SQL=WARN
+logging.level.org.hibernate.type.descriptor.sql.BasicBinder=WARN 
 ```
 
 ### Security Best Practices
@@ -213,12 +272,28 @@ spring.security.require-ssl=true
 5. **Regularly rotate JWT secret keys**
 6. **Monitor application logs** for security events
 
-### Profile Configuration
-- **dev**: Development environment with H2 console enabled
-- **prod**: Production environment with enhanced security
+### Environment Variables
 
-To run with specific profile:
+#### Development Environment
 ```bash
+# Set JWT secret key (optional for development)
+export JWT_SECRET_KEY=your-secret-key-here
+
+# Run with dev profile
+./gradlew bootRun --args='--spring.profiles.active=dev'
+```
+
+#### Production Environment
+```bash
+# Required environment variables
+export JWT_SECRET_KEY=your-secure-secret-key
+export DATABASE_URL=jdbc:postgresql://localhost:5432/finemytrip
+export DATABASE_USERNAME=your-username
+export DATABASE_PASSWORD=your-password
+export FILE_UPLOAD_PATH=/var/uploads
+export FILE_UPLOAD_URL_PREFIX=/uploads
+
+# Run with prod profile
 ./gradlew bootRun --args='--spring.profiles.active=prod'
 ```
 
