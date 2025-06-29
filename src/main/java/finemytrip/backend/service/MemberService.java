@@ -113,4 +113,20 @@ public class MemberService {
                 .map(this::convertToResponseDto)
                 .collect(Collectors.toList());
     }
+
+    @Transactional
+    public void deleteMember(Long id) {
+        Member member = memberRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Member not found. ID: " + id));
+        
+        memberRepository.delete(member);
+    }
+
+    @Transactional
+    public void deleteMemberByEmail(String email) {
+        Member member = memberRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Member not found. Email: " + email));
+        
+        memberRepository.delete(member);
+    }
 }

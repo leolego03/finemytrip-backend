@@ -67,4 +67,28 @@ public class MemberController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Internal server error occurred: " + e.getMessage());
         }
     }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<String> deleteMemberById(@PathVariable Long id) {
+        try {
+            memberService.deleteMember(id);
+            return ResponseEntity.ok("Member deleted successfully.");
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Internal server error occurred: " + e.getMessage());
+        }
+    }
+
+    @DeleteMapping("/email/{email}")
+    public ResponseEntity<String> deleteMemberByEmail(@PathVariable String email) {
+        try {
+            memberService.deleteMemberByEmail(email);
+            return ResponseEntity.ok("Member deleted successfully.");
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Internal server error occurred: " + e.getMessage());
+        }
+    }
 } 
