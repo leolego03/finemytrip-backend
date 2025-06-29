@@ -61,3 +61,6 @@ Thumbs.db
 
 ### Upload Directory ###
 uploads/
+
+### H2 Database ###
+data/
