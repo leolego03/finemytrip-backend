@@ -128,6 +128,8 @@ public class MainSlideService {
                 .bgSrc(slide.getBgSrc())
                 .url(slide.getUrl())
                 .date(slide.getDate())
+                .createdAt(slide.getCreatedAt())
+                .updatedAt(slide.getUpdatedAt())
                 .build();
     }
 } 

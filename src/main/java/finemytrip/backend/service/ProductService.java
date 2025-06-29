@@ -35,6 +35,7 @@ public class ProductService {
         }
 
         Product product = Product.builder()
+                .tripType(requestDto.getTripType())
                 .title(requestDto.getTitle())
                 .discountRate(requestDto.getDiscountRate())
                 .infoGroup(requestDto.getInfoGroup())
@@ -70,6 +71,7 @@ public class ProductService {
             product.setImgSrc(imageUrl);
         }
 
+        product.setTripType(requestDto.getTripType());
         product.setTitle(requestDto.getTitle());
         product.setDiscountRate(requestDto.getDiscountRate());
         product.setInfoGroup(requestDto.getInfoGroup());
@@ -98,6 +100,7 @@ public class ProductService {
     private ProductResponseDto convertToResponseDto(Product product) {
         return ProductResponseDto.builder()
                 .id(product.getId())
+                .tripType(product.getTripType())
                 .imgSrc(product.getImgSrc())
                 .discountRate(product.getDiscountRate())
                 .title(product.getTitle())
@@ -106,6 +109,8 @@ public class ProductService {
                 .currPrice(product.getCurrPrice())
                 .rating(product.getRating())
                 .sold(product.getSold())
+                .createdAt(product.getCreatedAt())
+                .updatedAt(product.getUpdatedAt())
                 .build();
     }
 } 
