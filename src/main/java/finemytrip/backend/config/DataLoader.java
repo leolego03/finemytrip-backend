@@ -35,6 +35,7 @@ public class DataLoader implements CommandLineRunner {
         if (fileCleanupEnabled) {
             cleanUploadDirectory();
         }
+        
         System.out.println("Data loading completed.");
     }
 

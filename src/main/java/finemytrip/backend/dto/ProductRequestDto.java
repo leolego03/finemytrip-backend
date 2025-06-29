@@ -6,20 +6,20 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.List;
+
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class ProductRequestDto {
     private String title;
-    private String originalPrice;
-    private String discountedPrice;
-    private String discountRate;
-    private String discountBadge;
-    private String info;
-    private String purchaseCount;
-    private String reviewRate;
-    private String starsHtml;
+    private Integer discountRate;
+    private List<String> infoGroup;
+    private Integer prevPrice;
+    private Integer currPrice;
+    private Double rating;
+    private Integer sold;
     
-    private MultipartFile image;
+    private MultipartFile imgSrc;
 } 

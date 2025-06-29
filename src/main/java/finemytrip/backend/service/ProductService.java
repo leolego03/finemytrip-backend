@@ -30,21 +30,19 @@ public class ProductService {
         String imageUrl = null;
 
         // Handle file upload
-        if (requestDto.getImage() != null && !requestDto.getImage().isEmpty()) {
-            imageUrl = fileUploadService.uploadFile(requestDto.getImage());
+        if (requestDto.getImgSrc() != null && !requestDto.getImgSrc().isEmpty()) {
+            imageUrl = fileUploadService.uploadFile(requestDto.getImgSrc());
         }
 
         Product product = Product.builder()
                 .title(requestDto.getTitle())
-                .originalPrice(requestDto.getOriginalPrice())
-                .discountedPrice(requestDto.getDiscountedPrice())
                 .discountRate(requestDto.getDiscountRate())
-                .discountBadge(requestDto.getDiscountBadge())
-                .image(imageUrl)
-                .info(requestDto.getInfo())
-                .purchaseCount(requestDto.getPurchaseCount())
-                .reviewRate(requestDto.getReviewRate())
-                .starsHtml(requestDto.getStarsHtml())
+                .infoGroup(requestDto.getInfoGroup())
+                .prevPrice(requestDto.getPrevPrice())
+                .currPrice(requestDto.getCurrPrice())
+                .rating(requestDto.getRating())
+                .sold(requestDto.getSold())
+                .imgSrc(imageUrl)
                 .build();
 
         Product savedProduct = productRepository.save(product);
@@ -63,24 +61,22 @@ public class ProductService {
                 .orElseThrow(() -> new RuntimeException("Product not found. ID: " + id));
 
         // Handle file upload
-        if (requestDto.getImage() != null && !requestDto.getImage().isEmpty()) {
+        if (requestDto.getImgSrc() != null && !requestDto.getImgSrc().isEmpty()) {
             // Delete old image file if exists
-            if (product.getImage() != null) {
-                fileUploadService.deleteFile(product.getImage());
+            if (product.getImgSrc() != null) {
+                fileUploadService.deleteFile(product.getImgSrc());
             }
-            String imageUrl = fileUploadService.uploadFile(requestDto.getImage());
-            product.setImage(imageUrl);
+            String imageUrl = fileUploadService.uploadFile(requestDto.getImgSrc());
+            product.setImgSrc(imageUrl);
         }
 
         product.setTitle(requestDto.getTitle());
-        product.setOriginalPrice(requestDto.getOriginalPrice());
-        product.setDiscountedPrice(requestDto.getDiscountedPrice());
         product.setDiscountRate(requestDto.getDiscountRate());
-        product.setDiscountBadge(requestDto.getDiscountBadge());
-        product.setInfo(requestDto.getInfo());
-        product.setPurchaseCount(requestDto.getPurchaseCount());
-        product.setReviewRate(requestDto.getReviewRate());
-        product.setStarsHtml(requestDto.getStarsHtml());
+        product.setInfoGroup(requestDto.getInfoGroup());
+        product.setPrevPrice(requestDto.getPrevPrice());
+        product.setCurrPrice(requestDto.getCurrPrice());
+        product.setRating(requestDto.getRating());
+        product.setSold(requestDto.getSold());
 
         Product updatedProduct = productRepository.save(product);
         return convertToResponseDto(updatedProduct);
@@ -92,8 +88,8 @@ public class ProductService {
                 .orElseThrow(() -> new RuntimeException("Product not found. ID: " + id));
 
         // Delete associated file
-        if (product.getImage() != null) {
-            fileUploadService.deleteFile(product.getImage());
+        if (product.getImgSrc() != null) {
+            fileUploadService.deleteFile(product.getImgSrc());
         }
 
         productRepository.deleteById(id);
@@ -102,16 +98,14 @@ public class ProductService {
     private ProductResponseDto convertToResponseDto(Product product) {
         return ProductResponseDto.builder()
                 .id(product.getId())
-                .title(product.getTitle())
-                .originalPrice(product.getOriginalPrice())
-                .discountedPrice(product.getDiscountedPrice())
+                .imgSrc(product.getImgSrc())
                 .discountRate(product.getDiscountRate())
-                .discountBadge(product.getDiscountBadge())
-                .image(product.getImage())
-                .info(product.getInfo())
-                .purchaseCount(product.getPurchaseCount())
-                .reviewRate(product.getReviewRate())
-                .starsHtml(product.getStarsHtml())
+                .title(product.getTitle())
+                .infoGroup(product.getInfoGroup())
+                .prevPrice(product.getPrevPrice())
+                .currPrice(product.getCurrPrice())
+                .rating(product.getRating())
+                .sold(product.getSold())
                 .build();
     }
 } 

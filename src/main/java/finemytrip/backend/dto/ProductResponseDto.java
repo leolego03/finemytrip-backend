@@ -5,20 +5,20 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
+
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class ProductResponseDto {
     private Long id;
-    private String image;
-    private String discountBadge;
+    private String imgSrc;
+    private Integer discountRate;
     private String title;
-    private String info;
-    private String discountRate;
-    private String originalPrice;
-    private String discountedPrice;
-    private String starsHtml;
-    private String reviewRate;
-    private String purchaseCount;
+    private List<String> infoGroup;
+    private Integer prevPrice;
+    private Integer currPrice;
+    private Double rating;
+    private Integer sold;
 } 

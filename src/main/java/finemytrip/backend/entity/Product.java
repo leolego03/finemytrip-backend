@@ -17,14 +17,17 @@ public class Product {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String image;
-    private String discountBadge;
+    private String imgSrc;
+    private Integer discountRate;
     private String title;
-    private String info;
-    private String discountRate;
-    private String originalPrice;
-    private String discountedPrice;
-    private String starsHtml;
-    private String reviewRate;
-    private String purchaseCount;
+    
+    @ElementCollection
+    @CollectionTable(name = "product_info_groups", joinColumns = @JoinColumn(name = "product_id"))
+    @Column(name = "info_group")
+    private java.util.List<String> infoGroup;
+    
+    private Integer prevPrice;
+    private Integer currPrice;
+    private Double rating;
+    private Integer sold;
 } 
