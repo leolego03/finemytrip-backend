@@ -19,14 +19,9 @@ public class MainSlideRequestDto {
     private String headline;
     private String url;
     private String date;
-    private Boolean isActive;
-    private Integer sortOrder;
+    private String imgAlt;
     
     // File upload fields
-    private MultipartFile imageFile;
-    private MultipartFile bgImageFile;
-    
-    // For backward compatibility (when image URL is provided directly)
-    private String image;
-    private String bgImage;
+    private MultipartFile imgSrc;
+    private MultipartFile bgSrc;
 } 

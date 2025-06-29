@@ -79,14 +79,4 @@ public class MainSlideController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
-    
-    @PatchMapping("/{id}/toggle")
-    public ResponseEntity<MainSlideResponseDto> toggleSlideStatus(@PathVariable Long id) {
-        try {
-            MainSlideResponseDto updatedSlide = mainSlideService.toggleSlideStatus(id);
-            return ResponseEntity.ok(updatedSlide);
-        } catch (RuntimeException e) {
-            return ResponseEntity.notFound().build();
-        }
-    }
 } 

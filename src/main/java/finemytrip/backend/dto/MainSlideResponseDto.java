@@ -5,8 +5,6 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.time.LocalDateTime;
-
 @Data
 @Builder
 @NoArgsConstructor
@@ -18,10 +16,7 @@ public class MainSlideResponseDto {
     private String title;
     private String headline;
     private String date;
-    private String image;
-    private String bgImage;
-    private Integer sortOrder;
-    private Boolean isActive;
-    private LocalDateTime createdAt;
-    private LocalDateTime updatedAt;
+    private String imgSrc;
+    private String imgAlt;
+    private String bgSrc;
 } 

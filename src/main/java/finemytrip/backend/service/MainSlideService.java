@@ -21,14 +21,14 @@ public class MainSlideService {
     private final FileUploadService fileUploadService;
     
     public List<MainSlideResponseDto> getAllSlides() {
-        return mainSlideRepository.findAllByOrderBySortOrderAscCreatedAtAsc()
+        return mainSlideRepository.findAll()
                 .stream()
                 .map(this::convertToResponseDto)
                 .collect(Collectors.toList());
     }
     
     public List<MainSlideResponseDto> getActiveSlides() {
-        return mainSlideRepository.findAllActiveOrderBySortOrder()
+        return mainSlideRepository.findAll()
                 .stream()
                 .map(this::convertToResponseDto)
                 .collect(Collectors.toList());
@@ -42,26 +42,26 @@ public class MainSlideService {
     
     @Transactional
     public MainSlideResponseDto createSlide(MainSlideRequestDto requestDto) throws IOException {
-        String imageUrl = requestDto.getImage();
-        String bgImageUrl = requestDto.getBgImage();
+        String imgSrc = null;
+        String bgSrc = null;
 
         // Handle file uploads
-        if (requestDto.getImageFile() != null && !requestDto.getImageFile().isEmpty()) {
-            imageUrl = fileUploadService.uploadFile(requestDto.getImageFile());
+        if (requestDto.getImgSrc() != null && !requestDto.getImgSrc().isEmpty()) {
+            imgSrc = fileUploadService.uploadFile(requestDto.getImgSrc());
         }
-        if (requestDto.getBgImageFile() != null && !requestDto.getBgImageFile().isEmpty()) {
-            bgImageUrl = fileUploadService.uploadFile(requestDto.getBgImageFile());
+        
+        if (requestDto.getBgSrc() != null && !requestDto.getBgSrc().isEmpty()) {
+            bgSrc = fileUploadService.uploadFile(requestDto.getBgSrc());
         }
 
         MainSlide slide = MainSlide.builder()
                 .title(requestDto.getTitle())
                 .headline(requestDto.getHeadline())
-                .image(imageUrl)
-                .bgImage(bgImageUrl)
+                .imgSrc(imgSrc)
+                .imgAlt(requestDto.getImgAlt())
+                .bgSrc(bgSrc)
                 .url(requestDto.getUrl() != null ? requestDto.getUrl() : "#")
                 .date(requestDto.getDate())
-                .isActive(requestDto.getIsActive() != null ? requestDto.getIsActive() : true)
-                .sortOrder(requestDto.getSortOrder())
                 .build();
         
         MainSlide savedSlide = mainSlideRepository.save(slide);
@@ -74,34 +74,29 @@ public class MainSlideService {
                 .orElseThrow(() -> new RuntimeException("Slide not found. ID: " + id));
         
         // Handle file uploads
-        if (requestDto.getImageFile() != null && !requestDto.getImageFile().isEmpty()) {
+        if (requestDto.getImgSrc() != null && !requestDto.getImgSrc().isEmpty()) {
             // Delete old image file if exists
-            if (slide.getImage() != null) {
-                fileUploadService.deleteFile(slide.getImage());
+            if (slide.getImgSrc() != null) {
+                fileUploadService.deleteFile(slide.getImgSrc());
             }
-            String imageUrl = fileUploadService.uploadFile(requestDto.getImageFile());
-            slide.setImage(imageUrl);
-        } else if (requestDto.getImage() != null) {
-            slide.setImage(requestDto.getImage());
+            String imgSrc = fileUploadService.uploadFile(requestDto.getImgSrc());
+            slide.setImgSrc(imgSrc);
         }
 
-        if (requestDto.getBgImageFile() != null && !requestDto.getBgImageFile().isEmpty()) {
+        if (requestDto.getBgSrc() != null && !requestDto.getBgSrc().isEmpty()) {
             // Delete old background image file if exists
-            if (slide.getBgImage() != null) {
-                fileUploadService.deleteFile(slide.getBgImage());
+            if (slide.getBgSrc() != null) {
+                fileUploadService.deleteFile(slide.getBgSrc());
             }
-            String bgImageUrl = fileUploadService.uploadFile(requestDto.getBgImageFile());
-            slide.setBgImage(bgImageUrl);
-        } else if (requestDto.getBgImage() != null) {
-            slide.setBgImage(requestDto.getBgImage());
+            String bgSrc = fileUploadService.uploadFile(requestDto.getBgSrc());
+            slide.setBgSrc(bgSrc);
         }
 
         slide.setTitle(requestDto.getTitle());
         slide.setHeadline(requestDto.getHeadline());
+        slide.setImgAlt(requestDto.getImgAlt());
         slide.setUrl(requestDto.getUrl());
         slide.setDate(requestDto.getDate());
-        slide.setIsActive(requestDto.getIsActive());
-        slide.setSortOrder(requestDto.getSortOrder());
         
         MainSlide updatedSlide = mainSlideRepository.save(slide);
         return convertToResponseDto(updatedSlide);
@@ -113,24 +108,14 @@ public class MainSlideService {
                 .orElseThrow(() -> new RuntimeException("Slide not found. ID: " + id));
 
         // Delete associated files
-        if (slide.getImage() != null) {
-            fileUploadService.deleteFile(slide.getImage());
+        if (slide.getImgSrc() != null) {
+            fileUploadService.deleteFile(slide.getImgSrc());
         }
-        if (slide.getBgImage() != null) {
-            fileUploadService.deleteFile(slide.getBgImage());
+        if (slide.getBgSrc() != null) {
+            fileUploadService.deleteFile(slide.getBgSrc());
         }
 
         mainSlideRepository.deleteById(id);
-    }
-    
-    @Transactional
-    public MainSlideResponseDto toggleSlideStatus(Long id) {
-        MainSlide slide = mainSlideRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Slide not found. ID: " + id));
-        
-        slide.setIsActive(!slide.getIsActive());
-        MainSlide updatedSlide = mainSlideRepository.save(slide);
-        return convertToResponseDto(updatedSlide);
     }
     
     private MainSlideResponseDto convertToResponseDto(MainSlide slide) {
@@ -138,14 +123,11 @@ public class MainSlideService {
                 .id(slide.getId())
                 .title(slide.getTitle())
                 .headline(slide.getHeadline())
-                .image(slide.getImage())
-                .bgImage(slide.getBgImage())
+                .imgSrc(slide.getImgSrc())
+                .imgAlt(slide.getImgAlt())
+                .bgSrc(slide.getBgSrc())
                 .url(slide.getUrl())
                 .date(slide.getDate())
-                .isActive(slide.getIsActive())
-                .sortOrder(slide.getSortOrder())
-                .createdAt(slide.getCreatedAt())
-                .updatedAt(slide.getUpdatedAt())
                 .build();
     }
 } 

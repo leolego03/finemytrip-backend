@@ -5,10 +5,6 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.UpdateTimestamp;
-
-import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "main_slides")
@@ -33,22 +29,12 @@ public class MainSlide {
     
     private String date;
     
-    private String image;
+    @Column(name = "img_src")
+    private String imgSrc;
     
-    @Column(name = "bg_image")
-    private String bgImage;
+    @Column(name = "img_alt")
+    private String imgAlt;
     
-    @Column(name = "sort_order")
-    private Integer sortOrder;
-    
-    @Column(name = "is_active")
-    private Boolean isActive = true;
-    
-    @CreationTimestamp
-    @Column(name = "created_at")
-    private LocalDateTime createdAt;
-    
-    @UpdateTimestamp
-    @Column(name = "updated_at")
-    private LocalDateTime updatedAt;
+    @Column(name = "bg_src")
+    private String bgSrc;
 } 
