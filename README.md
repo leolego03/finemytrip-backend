@@ -10,23 +10,20 @@ FineMyTrip Backend is a RESTful API service that provides comprehensive travel p
 
 ### 1. Main Slide Management
 - Data processing for main slides
-- Slide image file upload support
-- Slide URL, title, headline, and description management
-- Active/inactive status toggle
-- Sort order management
+- Slide image files upload support
+- Slide URL, title, and headline management
 
 ### 2. Travel Product Management
 - Data processing for travel products
 - Product image file upload support
-- Product URL, name, price, and description management
-- Discount rate and badge support
+- Product type, title, information groups management
+- Previous and current price reflecting discount rate
 - Purchase count and review rate tracking
 
 ### 3. User Management (JWT Authentication)
-- User registration
+- User registration, deletion
 - User login with JWT token issuance
 - User logout with token blacklisting
-- User profile management
 
 ### 4. Security Features
 - JWT-based authentication
@@ -105,6 +102,8 @@ finemytrip-backend/
 ### Authentication (Public)
 - `POST /api/members/register` - User registration
 - `POST /api/members/login` - User login (returns JWT token)
+- `DELETE /api/members/{id}` - User deletion by ID (requires JWT token)
+- `DELETE /api/members/email/{email}` - User deletion by email (requires JWT token)
 
 ### User Management (Public Read, Authenticated Write)
 - `GET /api/members` - Get all users (public)
@@ -153,8 +152,11 @@ finemytrip-backend/
 - **Access**: Static resource serving via `/uploads/{filename}`
 
 ### Environment-specific Behavior
-- **Development**: Files stored in `./uploads/` (project root), auto-cleanup on startup
-- **Production**: Files stored in configured external directory, no auto-cleanup
+- **Development**  
+  - When the application starts, the local H2 database files (e.g., `finemytrip.mv.db`) are stored in the `./data` folder at the project root.  
+  - The `./data` folder is created automatically; include it in version control or add it to `.gitignore` as needed.  
+- **Uploads**  
+  - Files are stored in the `./uploads/` folder at the project root.
 
 ## Configuration Files
 
@@ -164,13 +166,14 @@ Since all `application*.properties` files are excluded from Git for security rea
 
 #### 1. `src/main/resources/application.properties`
 ```properties
+# Application Configuration
 spring.application.name=backend
 
 # Profile Configuration
 spring.profiles.active=dev
 
 # Basic JWT Configuration
-jwt.secret.key=${JWT_SECRET_KEY:<YOUR_SECRET>}
+jwt.secret.key=${JWT_SECRET_KEY:YOUR_SECRET_HERE}
 jwt.expiration.time=86400000
 
 # File Upload Configuration
@@ -178,25 +181,28 @@ spring.servlet.multipart.max-file-size=10MB
 spring.servlet.multipart.max-request-size=10MB
 file.upload.path=${user.dir}/uploads
 file.upload.url-prefix=/uploads
+
+# CORS Configuration
+cors.allowed-origins=${CORS_ALLOWED_ORIGINS}
 ```
 
 #### 2. `src/main/resources/application-dev.properties`
 ```properties
 # Development Environment Configuration
 
+# JWT Configuration
+jwt.secret.key=${JWT_SECRET_KEY:YOUR_SECRET_HERE}
+jwt.expiration.time=86400000
+
 # Database Configuration
-spring.datasource.url=jdbc:h2:mem:testdb
+spring.datasource.url=jdbc:h2:file:./data/finemytrip
 spring.datasource.driverClassName=org.h2.Driver
 spring.datasource.username=sa
 spring.datasource.password=
 
-# H2 Console (Development only)
-spring.h2.console.enabled=true
-spring.h2.console.path=/h2-console
-
 # JPA Configuration
 spring.jpa.database-platform=org.hibernate.dialect.H2Dialect
-spring.jpa.hibernate.ddl-auto=create-drop
+spring.jpa.hibernate.ddl-auto=update
 spring.jpa.show-sql=true
 spring.jpa.properties.hibernate.format_sql=true
 
@@ -204,19 +210,18 @@ spring.jpa.properties.hibernate.format_sql=true
 logging.level.org.hibernate.SQL=DEBUG
 logging.level.org.hibernate.type.descriptor.sql.BasicBinder=TRACE
 
-# JWT Configuration
-jwt.secret.key=${JWT_SECRET_KEY:<YOUR_SECRET>}
-jwt.expiration.time=86400000
-
 # File Upload Configuration
 spring.servlet.multipart.max-file-size=10MB
 spring.servlet.multipart.max-request-size=10MB
 file.upload.path=${user.dir}/uploads
 file.upload.url-prefix=/uploads
 
-# Development Environment Settings
-# Enable File Organization (Development Environment Only)
-app.file.cleanup.enabled=true
+# CORS Configuration (Development)
+cors.allowed-origins=${CORS_ALLOWED_ORIGINS}
+
+# H2 Console (Development only)
+spring.h2.console.enabled=true
+spring.h2.console.path=/h2-console
 ```
 
 #### 3. `src/main/resources/application-prod.properties`
@@ -224,22 +229,27 @@ app.file.cleanup.enabled=true
 # Production Environment Configuration
 
 # JWT Configuration
-jwt.secret.key=${JWT_SECRET_KEY:<YOUR_SECRET>}
+jwt.secret.key=${JWT_SECRET_KEY:YOUR_SECRET_HERE}
 jwt.expiration.time=86400000
 
-# Database Configuration
-spring.datasource.url=jdbc:h2:mem:testdb
-spring.datasource.driverClassName=org.h2.Driver
-spring.datasource.username=sa
-spring.datasource.password=
+# Database Configuration (PostgreSQL)
+spring.datasource.url=jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:finemytrip}
+spring.datasource.username=${DB_USERNAME:postgres}
+spring.datasource.password=${DB_PASSWORD:postgrespassword}
+spring.datasource.driver-class-name=org.postgresql.Driver
+# Optional: HikariCP tuning
+spring.datasource.hikari.maximum-pool-size=20
+spring.datasource.hikari.minimum-idle=5
 
 # JPA Configuration
-spring.jpa.database-platform=org.hibernate.dialect.H2Dialect
-spring.jpa.hibernate.ddl-auto=create-drop
+spring.jpa.database-platform=org.hibernate.dialect.PostgreSQLDialect
+spring.jpa.hibernate.ddl-auto=validate
 spring.jpa.show-sql=false
+spring.jpa.properties.hibernate.format_sql=false
 
-# H2 Console Disabled
-spring.h2.console.enabled=false
+# Logging Configuration (Minimal logging in production)
+logging.level.org.hibernate.SQL=WARN
+logging.level.org.hibernate.type.descriptor.sql.BasicBinder=WARN
 
 # File Upload Configuration
 spring.servlet.multipart.max-file-size=10MB
@@ -247,21 +257,19 @@ spring.servlet.multipart.max-request-size=10MB
 file.upload.path=/var/finemytrip/uploads
 file.upload.url-prefix=/uploads
 
-# Production Environment Settings
-# Disable file organization (file retention in production)
-app.file.cleanup.enabled=false
+# CORS Configuration (Production)
+cors.allowed-origins=${CORS_ALLOWED_ORIGINS}
+
+# H2 Console Disabled
+spring.h2.console.enabled=false
+
+# Security Configuration
+spring.security.require-ssl=true
 
 # Logging Configuration
 logging.level.root=WARN
 logging.level.finemytrip.backend=INFO
 logging.level.org.springframework.security=WARN
-
-# Security Configuration
-spring.security.require-ssl=true
-
-# Logging Configuration (Minimal logging in production)
-logging.level.org.hibernate.SQL=WARN
-logging.level.org.hibernate.type.descriptor.sql.BasicBinder=WARN 
 ```
 
 ### Security Best Practices
@@ -287,9 +295,12 @@ export JWT_SECRET_KEY=your-secret-key-here
 ```bash
 # Required environment variables
 export JWT_SECRET_KEY=your-secure-secret-key
-export DATABASE_URL=jdbc:postgresql://localhost:5432/finemytrip
-export DATABASE_USERNAME=your-username
-export DATABASE_PASSWORD=your-password
+export DB_HOST=localhost
+export DB_PORT=5432
+export DB_NAME=finemytrip
+export DB_USERNAME=your-username
+export DB_PASSWORD=your-password
+export CORS_ALLOWED_ORIGINS=https://your.domain.com
 export FILE_UPLOAD_PATH=/var/uploads
 export FILE_UPLOAD_URL_PREFIX=/uploads
 
@@ -321,9 +332,9 @@ cd finemytrip-backend
 ./test_jwt.sh
 ```
 
-### Database Access
+### Database Access (Development)
 - **H2 Console**: http://localhost:8080/h2-console
-- **JDBC URL**: jdbc:h2:mem:testdb
+- **JDBC URL**: jdbc:h2:file:./data/finemytrip
 - **Username**: sa
 - **Password**: (empty)
 
