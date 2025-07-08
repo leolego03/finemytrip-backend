@@ -1,5 +1,7 @@
 package finemytrip.backend.service;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import finemytrip.backend.dto.ProductRequestDto;
 import finemytrip.backend.dto.ProductResponseDto;
 import finemytrip.backend.entity.Product;
@@ -18,6 +20,7 @@ import java.util.stream.Collectors;
 public class ProductService {
     private final ProductRepository productRepository;
     private final FileUploadService fileUploadService;
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     public List<ProductResponseDto> getAllProducts() {
         return productRepository.findAll().stream()
@@ -34,11 +37,14 @@ public class ProductService {
             imageUrl = fileUploadService.uploadFile(requestDto.getImgSrc());
         }
 
+        // Parse infoGroup from JSON string to List<String>
+        List<String> infoGroupList = parseInfoGroup(requestDto.getInfoGroup());
+
         Product product = Product.builder()
                 .tripType(requestDto.getTripType())
                 .title(requestDto.getTitle())
                 .discountRate(requestDto.getDiscountRate())
-                .infoGroup(requestDto.getInfoGroup())
+                .infoGroup(infoGroupList)
                 .prevPrice(requestDto.getPrevPrice())
                 .currPrice(requestDto.getCurrPrice())
                 .rating(requestDto.getRating())
@@ -71,10 +77,13 @@ public class ProductService {
             product.setImgSrc(imageUrl);
         }
 
+        // Parse infoGroup from JSON string to List<String>
+        List<String> infoGroupList = parseInfoGroup(requestDto.getInfoGroup());
+
         product.setTripType(requestDto.getTripType());
         product.setTitle(requestDto.getTitle());
         product.setDiscountRate(requestDto.getDiscountRate());
-        product.setInfoGroup(requestDto.getInfoGroup());
+        product.setInfoGroup(infoGroupList);
         product.setPrevPrice(requestDto.getPrevPrice());
         product.setCurrPrice(requestDto.getCurrPrice());
         product.setRating(requestDto.getRating());
@@ -95,6 +104,19 @@ public class ProductService {
         }
 
         productRepository.deleteById(id);
+    }
+
+    private List<String> parseInfoGroup(String infoGroupJson) {
+        if (infoGroupJson == null || infoGroupJson.trim().isEmpty()) {
+            return List.of();
+        }
+        
+        try {
+            return objectMapper.readValue(infoGroupJson, new TypeReference<List<String>>() {});
+        } catch (Exception e) {
+            // If JSON parsing fails, it is treated as a comma-separated string
+            return List.of(infoGroupJson.split(","));
+        }
     }
 
     private ProductResponseDto convertToResponseDto(Product product) {

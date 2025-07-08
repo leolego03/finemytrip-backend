@@ -211,8 +211,10 @@ logging.level.org.hibernate.SQL=DEBUG
 logging.level.org.hibernate.type.descriptor.sql.BasicBinder=TRACE
 
 # File Upload Configuration
-spring.servlet.multipart.max-file-size=10MB
-spring.servlet.multipart.max-request-size=10MB
+spring.servlet.multipart.max-file-size=30MB
+spring.servlet.multipart.max-request-size=30MB
+server.tomcat.max-http-form-post-size=30MB
+server.tomcat.max-swallow-size=-1
 file.upload.path=${user.dir}/uploads
 file.upload.url-prefix=/uploads
 

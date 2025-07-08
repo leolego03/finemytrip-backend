@@ -16,7 +16,7 @@ public class ProductRequestDto {
     private String tripType;
     private String title;
     private Integer discountRate;
-    private List<String> infoGroup;
+    private String infoGroup;
     private Integer prevPrice;
     private Integer currPrice;
     private Double rating;
