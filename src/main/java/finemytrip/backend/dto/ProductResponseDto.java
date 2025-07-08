@@ -6,6 +6,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Data
 @Builder
@@ -17,7 +18,7 @@ public class ProductResponseDto {
     private String imgSrc;
     private Integer discountRate;
     private String title;
-    private String infoGroup;
+    private List<String> infoGroup;
     private Integer prevPrice;
     private Integer currPrice;
     private Double rating;

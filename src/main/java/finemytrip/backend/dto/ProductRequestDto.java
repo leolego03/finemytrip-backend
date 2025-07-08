@@ -6,6 +6,8 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.List;
+
 @Data
 @Builder
 @NoArgsConstructor
@@ -14,7 +16,7 @@ public class ProductRequestDto {
     private String tripType;
     private String title;
     private Integer discountRate;
-    private String infoGroup;
+    private List<String> infoGroup;
     private Integer prevPrice;
     private Integer currPrice;
     private Double rating;

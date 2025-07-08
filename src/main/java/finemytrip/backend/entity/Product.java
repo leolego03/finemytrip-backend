@@ -10,6 +10,7 @@ import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Entity
 @Table(name = "products")
@@ -28,7 +29,10 @@ public class Product {
     private Integer discountRate;
     private String title;
     
-    private String infoGroup;
+    @ElementCollection
+    @CollectionTable(name = "product_info_groups", joinColumns = @JoinColumn(name = "product_id"))
+    @Column(name = "info_group")
+    private List<String> infoGroup;
     
     private Integer prevPrice;
     private Integer currPrice;
