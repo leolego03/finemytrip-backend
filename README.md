@@ -162,6 +162,9 @@ finemytrip-backend/
 
 Since all `application*.properties` files are excluded from Git for security reasons, you need to create your own configuration files locally.
 
+<details>
+<summary><b>Chcek application properties templates</b></summary>
+
 ### Required Configuration Files
 
 #### 1. `src/main/resources/application.properties`
@@ -273,6 +276,7 @@ logging.level.root=WARN
 logging.level.finemytrip.backend=INFO
 logging.level.org.springframework.security=WARN
 ```
+</details>
 
 ### Security Best Practices
 1. **Never commit sensitive information** like secret keys or passwords
