@@ -6,21 +6,21 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.util.List;
-
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class ProductRequestDto {
     private String tripType;
-    private String title;
+    private MultipartFile imgSrc;
     private Integer discountRate;
+    private String title;
     private String infoGroup;
     private Integer prevPrice;
     private Integer currPrice;
     private Double rating;
     private Integer sold;
-    
-    private MultipartFile imgSrc;
+
+    private String introTitle;
+    private String introText;
 } 

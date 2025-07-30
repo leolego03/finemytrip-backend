@@ -23,6 +23,10 @@ public class ProductResponseDto {
     private Integer currPrice;
     private Double rating;
     private Integer sold;
+
+    private String introTitle;
+    private String introText;
+
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 } 

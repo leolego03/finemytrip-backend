@@ -42,14 +42,16 @@ public class ProductService {
 
         Product product = Product.builder()
                 .tripType(requestDto.getTripType())
-                .title(requestDto.getTitle())
+                .imgSrc(imageUrl)
                 .discountRate(requestDto.getDiscountRate())
+                .title(requestDto.getTitle())
                 .infoGroup(infoGroupList)
                 .prevPrice(requestDto.getPrevPrice())
                 .currPrice(requestDto.getCurrPrice())
                 .rating(requestDto.getRating())
                 .sold(requestDto.getSold())
-                .imgSrc(imageUrl)
+                .introTitle(requestDto.getIntroTitle())
+                .introText(requestDto.getIntroText())
                 .build();
 
         Product savedProduct = productRepository.save(product);
@@ -81,13 +83,15 @@ public class ProductService {
         List<String> infoGroupList = parseInfoGroup(requestDto.getInfoGroup());
 
         product.setTripType(requestDto.getTripType());
-        product.setTitle(requestDto.getTitle());
         product.setDiscountRate(requestDto.getDiscountRate());
+        product.setTitle(requestDto.getTitle());
         product.setInfoGroup(infoGroupList);
         product.setPrevPrice(requestDto.getPrevPrice());
         product.setCurrPrice(requestDto.getCurrPrice());
         product.setRating(requestDto.getRating());
         product.setSold(requestDto.getSold());
+        product.setIntroTitle(requestDto.getIntroTitle());
+        product.setIntroText(requestDto.getIntroText());
 
         Product updatedProduct = productRepository.save(product);
         return convertToResponseDto(updatedProduct);
@@ -131,6 +135,8 @@ public class ProductService {
                 .currPrice(product.getCurrPrice())
                 .rating(product.getRating())
                 .sold(product.getSold())
+                .introTitle(product.getIntroTitle())
+                .introText(product.getIntroText())
                 .createdAt(product.getCreatedAt())
                 .updatedAt(product.getUpdatedAt())
                 .build();

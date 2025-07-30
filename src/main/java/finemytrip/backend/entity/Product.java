@@ -38,7 +38,12 @@ public class Product {
     private Integer currPrice;
     private Double rating;
     private Integer sold;
+
+    private String introTitle;
     
+    @Column(columnDefinition = "TEXT")
+    private String introText;
+
     @CreatedDate
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
