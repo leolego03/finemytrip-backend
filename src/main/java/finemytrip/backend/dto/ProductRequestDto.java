@@ -23,4 +23,29 @@ public class ProductRequestDto {
 
     private String introTitle;
     private String introText;
+    
+    // Securely handle all special characters in introText
+    public String getIntroText() {
+        if (introText == null) {
+            return null;
+        }
+        // Replace opening characters, carriage returns, tabs with spaces
+        // Safely handle special characters, too
+        return introText
+                .replaceAll("[\\r\\n\\t]", " ")
+                .replaceAll("\\s+", " ")
+                .trim();
+    }
+    
+    // Apply the same processing in setter
+    public void setIntroText(String introText) {
+        if (introText != null) {
+            this.introText = introText
+                    .replaceAll("[\\r\\n\\t]", " ")
+                    .replaceAll("\\s+", " ")
+                    .trim();
+        } else {
+            this.introText = null;
+        }
+    }
 } 
