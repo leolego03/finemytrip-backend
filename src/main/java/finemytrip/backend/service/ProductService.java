@@ -7,16 +7,21 @@ import finemytrip.backend.dto.ProductResponseDto;
 import finemytrip.backend.entity.Product;
 import finemytrip.backend.repository.ProductRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
+@Slf4j
 public class ProductService {
     private final ProductRepository productRepository;
     private final FileUploadService fileUploadService;
@@ -32,9 +37,9 @@ public class ProductService {
     public ProductResponseDto createProduct(ProductRequestDto requestDto) throws IOException {
         String imageUrl = null;
 
-        // Handle file upload
+        // Handle Base64 image upload
         if (requestDto.getImgSrc() != null && !requestDto.getImgSrc().isEmpty()) {
-            imageUrl = fileUploadService.uploadFile(requestDto.getImgSrc());
+            imageUrl = uploadBase64Image(requestDto.getImgSrc());
         }
 
         // Parse infoGroup from JSON string to List<String>
@@ -69,13 +74,13 @@ public class ProductService {
         Product product = productRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Product not found. ID: " + id));
 
-        // Handle file upload
+        // Handle Base64 image upload
         if (requestDto.getImgSrc() != null && !requestDto.getImgSrc().isEmpty()) {
             // Delete old image file if exists
             if (product.getImgSrc() != null) {
                 fileUploadService.deleteFile(product.getImgSrc());
             }
-            String imageUrl = fileUploadService.uploadFile(requestDto.getImgSrc());
+            String imageUrl = uploadBase64Image(requestDto.getImgSrc());
             product.setImgSrc(imageUrl);
         }
 
@@ -110,6 +115,72 @@ public class ProductService {
         productRepository.deleteById(id);
     }
 
+    // Method to upload Base64 image to file
+    private String uploadBase64Image(String base64Image) throws IOException {
+        try {
+            // Remove header from Base64 data (e.g. "data:image/png;base64,")
+            String base64Data = base64Image;
+            if (base64Image.contains(",")) {
+                base64Data = base64Image.substring(base64Image.indexOf(",") + 1);
+            }
+            
+            // Base64 Decoding
+            byte[] imageBytes = java.util.Base64.getDecoder().decode(base64Data);
+            
+            // Create File Name
+            String fileName = UUID.randomUUID().toString() + ".png";
+            
+            // Convert to MultipartFile to use existing File Upload Service
+            MultipartFile multipartFile = new MultipartFile() {
+                @Override
+                public String getName() {
+                    return "file";
+                }
+
+                @Override
+                public String getOriginalFilename() {
+                    return fileName;
+                }
+
+                @Override
+                public String getContentType() {
+                    return "image/png";
+                }
+
+                @Override
+                public boolean isEmpty() {
+                    return imageBytes.length == 0;
+                }
+
+                @Override
+                public long getSize() {
+                    return imageBytes.length;
+                }
+
+                @Override
+                public byte[] getBytes() throws IOException {
+                    return imageBytes;
+                }
+
+                @Override
+                public java.io.InputStream getInputStream() throws IOException {
+                    return new ByteArrayInputStream(imageBytes);
+                }
+
+                @Override
+                public void transferTo(java.io.File dest) throws IOException, IllegalStateException {
+                    java.nio.file.Files.write(dest.toPath(), imageBytes);
+                }
+            };
+            
+            return fileUploadService.uploadFile(multipartFile);
+            
+        } catch (Exception e) {
+            log.error("Failed to upload Base64 image: {}", e.getMessage());
+            throw new IOException("Failed to upload Base64 image", e);
+        }
+    }
+
     private List<String> parseInfoGroup(String infoGroupJson) {
         if (infoGroupJson == null || infoGroupJson.trim().isEmpty()) {
             return List.of();
@@ -141,4 +212,4 @@ public class ProductService {
                 .updatedAt(product.getUpdatedAt())
                 .build();
     }
-} 
+}
