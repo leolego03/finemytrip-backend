@@ -40,9 +40,11 @@ public class Product {
     private Integer sold;
 
     private String introTitle;
-    
+
     @Column(columnDefinition = "TEXT")
     private String introText;
+    
+    private String introImgSrc;
 
     @CreatedDate
     @Column(name = "created_at", nullable = false, updatable = false)

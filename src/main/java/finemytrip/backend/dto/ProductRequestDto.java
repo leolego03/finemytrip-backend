@@ -22,6 +22,7 @@ public class ProductRequestDto {
 
     private String introTitle;
     private String introText;
+    private String introImgSrc;
     
     // Securely handle all special characters in introText
     public String getIntroText() {

@@ -26,6 +26,7 @@ public class ProductResponseDto {
 
     private String introTitle;
     private String introText;
+    private String introImgSrc;
 
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;

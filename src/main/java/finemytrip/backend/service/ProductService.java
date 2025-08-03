@@ -36,10 +36,16 @@ public class ProductService {
     @Transactional
     public ProductResponseDto createProduct(ProductRequestDto requestDto) throws IOException {
         String imageUrl = null;
+        String introImageUrl = null;
 
         // Handle Base64 image upload
         if (requestDto.getImgSrc() != null && !requestDto.getImgSrc().isEmpty()) {
             imageUrl = uploadBase64Image(requestDto.getImgSrc());
+        }
+
+        // Handle Base64 intro image upload
+        if (requestDto.getIntroImgSrc() != null && !requestDto.getIntroImgSrc().isEmpty()) {
+            introImageUrl = uploadBase64Image(requestDto.getIntroImgSrc());
         }
 
         // Parse infoGroup from JSON string to List<String>
@@ -56,6 +62,7 @@ public class ProductService {
                 .rating(requestDto.getRating())
                 .sold(requestDto.getSold())
                 .introTitle(requestDto.getIntroTitle())
+                .introImgSrc(introImageUrl)
                 .introText(requestDto.getIntroText())
                 .build();
 
@@ -84,6 +91,16 @@ public class ProductService {
             product.setImgSrc(imageUrl);
         }
 
+        // Handle Base64 intro image upload
+        if (requestDto.getIntroImgSrc() != null && !requestDto.getIntroImgSrc().isEmpty()) {
+            // Delete old intro image file if exists
+            if (product.getIntroImgSrc() != null) {
+                fileUploadService.deleteFile(product.getIntroImgSrc());
+            }
+            String introImageUrl = uploadBase64Image(requestDto.getIntroImgSrc());
+            product.setIntroImgSrc(introImageUrl);
+        }
+
         // Parse infoGroup from JSON string to List<String>
         List<String> infoGroupList = parseInfoGroup(requestDto.getInfoGroup());
 
@@ -107,9 +124,13 @@ public class ProductService {
         Product product = productRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Product not found. ID: " + id));
 
-        // Delete associated file
+        // Delete associated files
         if (product.getImgSrc() != null) {
             fileUploadService.deleteFile(product.getImgSrc());
+        }
+        
+        if (product.getIntroImgSrc() != null) {
+            fileUploadService.deleteFile(product.getIntroImgSrc());
         }
 
         productRepository.deleteById(id);
@@ -207,6 +228,7 @@ public class ProductService {
                 .rating(product.getRating())
                 .sold(product.getSold())
                 .introTitle(product.getIntroTitle())
+                .introImgSrc(product.getIntroImgSrc())
                 .introText(product.getIntroText())
                 .createdAt(product.getCreatedAt())
                 .updatedAt(product.getUpdatedAt())
