@@ -15,6 +15,7 @@ import java.util.List;
 public class ProductResponseDto {
     private Long id;
     private String tripType;
+    private String thumbnailSrc;
     private String imgSrc;
     private Integer discountRate;
     private String title;

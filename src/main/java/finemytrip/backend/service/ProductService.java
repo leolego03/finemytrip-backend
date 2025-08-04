@@ -6,6 +6,7 @@ import finemytrip.backend.entity.Product;
 import finemytrip.backend.repository.ProductRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -32,8 +33,14 @@ public class ProductService {
 
     @Transactional
     public ProductResponseDto createProduct(ProductRequestDto requestDto) throws IOException {
+        String thumbnailUrl = null;
         String imageUrl = null;
         String introImageUrl = null;
+
+        // Handle Base64 thumbnail upload
+        if (requestDto.getThumbnailSrc() != null && !requestDto.getThumbnailSrc().isEmpty()) {
+            thumbnailUrl = uploadBase64Image(requestDto.getThumbnailSrc());
+        }
 
         // Handle Base64 image upload
         if (requestDto.getImgSrc() != null && !requestDto.getImgSrc().isEmpty()) {
@@ -47,6 +54,7 @@ public class ProductService {
 
         Product product = Product.builder()
                 .tripType(requestDto.getTripType())
+                .thumbnailSrc(thumbnailUrl)
                 .imgSrc(imageUrl)
                 .discountRate(requestDto.getDiscountRate())
                 .title(requestDto.getTitle())
@@ -74,6 +82,16 @@ public class ProductService {
     public ProductResponseDto updateProduct(Long id, ProductRequestDto requestDto) throws IOException {
         Product product = productRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Product not found. ID: " + id));
+
+        // Handle Base64 thumbnail upload
+        if (requestDto.getThumbnailSrc() != null && !requestDto.getThumbnailSrc().isEmpty()) {
+            // Delete old thumbnail file if exists
+            if (product.getThumbnailSrc() != null) {
+                fileUploadService.deleteFile(product.getThumbnailSrc());
+            }
+            String thumbnailUrl = uploadBase64Image(requestDto.getThumbnailSrc());
+            product.setThumbnailSrc(thumbnailUrl);
+        }
 
         // Handle Base64 image upload
         if (requestDto.getImgSrc() != null && !requestDto.getImgSrc().isEmpty()) {
@@ -116,6 +134,10 @@ public class ProductService {
                 .orElseThrow(() -> new RuntimeException("Product not found. ID: " + id));
 
         // Delete associated files
+        if (product.getThumbnailSrc() != null) {
+            fileUploadService.deleteFile(product.getThumbnailSrc());
+        }
+
         if (product.getImgSrc() != null) {
             fileUploadService.deleteFile(product.getImgSrc());
         }
@@ -145,7 +167,7 @@ public class ProductService {
             // Convert to MultipartFile to use existing File Upload Service
             MultipartFile multipartFile = new MultipartFile() {
                 @Override
-                public String getName() {
+                public @NonNull String getName() {
                     return "file";
                 }
 
@@ -170,17 +192,17 @@ public class ProductService {
                 }
 
                 @Override
-                public byte[] getBytes() throws IOException {
+                public @NonNull byte[] getBytes() throws IOException {
                     return imageBytes;
                 }
 
                 @Override
-                public java.io.InputStream getInputStream() throws IOException {
+                public @NonNull java.io.InputStream getInputStream() throws IOException {
                     return new ByteArrayInputStream(imageBytes);
                 }
 
                 @Override
-                public void transferTo(java.io.File dest) throws IOException, IllegalStateException {
+                public void transferTo(@NonNull java.io.File dest) throws IOException, IllegalStateException {
                     java.nio.file.Files.write(dest.toPath(), imageBytes);
                 }
             };
@@ -197,6 +219,7 @@ public class ProductService {
         return ProductResponseDto.builder()
                 .id(product.getId())
                 .tripType(product.getTripType())
+                .thumbnailSrc(product.getThumbnailSrc())
                 .imgSrc(product.getImgSrc())
                 .discountRate(product.getDiscountRate())
                 .title(product.getTitle())

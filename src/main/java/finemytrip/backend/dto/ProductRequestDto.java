@@ -13,6 +13,7 @@ import java.util.List;
 @AllArgsConstructor
 public class ProductRequestDto {
     private String tripType;
+    private String thumbnailSrc;
     private String imgSrc;
     private Integer discountRate;
     private String title;

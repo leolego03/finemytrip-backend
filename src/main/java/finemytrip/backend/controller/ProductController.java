@@ -2,19 +2,13 @@ package finemytrip.backend.controller;
 
 import finemytrip.backend.dto.ProductRequestDto;
 import finemytrip.backend.dto.ProductResponseDto;
-import finemytrip.backend.service.FileUploadService;
 import finemytrip.backend.service.ProductService;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartException;
-import org.springframework.web.multipart.MultipartFile;
-import org.springframework.web.multipart.MultipartHttpServletRequest;
 
 import java.io.IOException;
 import java.util.List;
@@ -26,7 +20,6 @@ import java.util.List;
 @Slf4j
 public class ProductController {
     private final ProductService productService;
-    private final FileUploadService fileUploadService;
 
     @GetMapping
     public ResponseEntity<List<ProductResponseDto>> getAllProducts() {
